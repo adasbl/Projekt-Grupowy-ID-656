@@ -12,14 +12,22 @@ class UartBridge(Node):
         self.get_logger().info('Mostek UART uruchomiony. Czekam na /cmd_vel...')
 
     def cmd_vel_callback(self, msg):
-        v_lin = round(msg.linear.x, 3)
-        v_ang = round(msg.angular.z, 3)
+        # Pobieramy floaty (nie ma potrzeby zaokrąglania przy przesyłaniu binarnym)
+        v_lin = float(msg.linear.x)
+        v_ang = float(msg.angular.z)
         
-        frame = f"{v_lin},{v_ang}\n"
+        # Pakujemy dane do formatu binarnego:
+        # '<' : Little-Endian (kolejność bajtów stosowana w STM32)
+        # 'B' : 1 bajt bez znaku (unsigned char) dla 0xAA
+        # 'f' : 4 bajty zmiennoprzecinkowe (float) dla prędkości liniowej
+        # 'f' : 4 bajty zmiennoprzecinkowe (float) dla prędkości kątowej
+        # 'B' : 1 bajt bez znaku (unsigned char) dla 0x55
+        frame = f"{v_lin}, {v_ang}\n"
         
-        self.get_logger().info(f"Wysylam po UART: {frame.strip()}")
+        self.get_logger().info(f"Wysylam ramke binarna: v_lin={v_lin:.3f}, v_ang={v_ang:.3f}")
         
-        self.serial_port.write(frame.encode('utf-8'))
+        # Wysyłamy surowe bajty (nie używamy .encode('utf-8'))
+        self.serial_port.write(frame)
 
 def main(args=None):
     rclpy.init(args=args)
