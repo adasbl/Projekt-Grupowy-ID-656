@@ -1,6 +1,0 @@
-TO DO:
-- dodać link do gita do dokumentacji
-- poprawić bilans mocy i napisać w nim o dzielniku napięcia
-
-
-
