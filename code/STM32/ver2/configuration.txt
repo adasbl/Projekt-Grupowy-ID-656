@@ -26,7 +26,7 @@ PC5 - USART3_RX
 
 GPIO:
 gpio EXTI13:
-PC13 - B1
+PC13 - B1 - PullUp
 gpio output:
 PC1 - D1
 PC2 - D2
