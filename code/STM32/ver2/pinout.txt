@@ -25,7 +25,7 @@ PC4 - USART3_TX
 PC5 - USART3_RX
 
 GPIO:
-gpio input:
+gpio EXTI13:
 PC13 - B1
 gpio output:
 PC1 - D1
