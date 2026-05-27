@@ -30,22 +30,25 @@
 
 23.01.2026 - spotkanie grupowe (wszy) - umieszczenie oraz sprzęgnięcie enkoderów zliczających wykonane obroty kół, implementacja regulatora PID sterującego obrotem kół, wykonanie schematów elektrycznego oraz blokowego oraz kontynuacja uzupełniania dokumentacji, implementacja komunikacji pomiędzy STM32 a ESP32, w tym komunikacji bezprzewodowej, napisanie biblioteki do odczytu danych z żyroskopu oraz akcelerometru.
 
-[...]
-maile od arex
-
 02.03.2026 - spotkanie z klientem (wszy) - spotkanie wszystkich grup arexowych w CI TASK
 
 04.03.2026 - spotkanie grupowe (A, Mt) - ogarnianie rosa
 
 11.03.2026 - spotkanie grupowe (A, Mt) - pisanie kodu stm32
 
+17.03.2026 - spotkanie grupowe (A, Mt) - konfiguracja autostartu rosa 
+
 25.03.2026 - spotkanie grupowe (A, Mt) - instalacja i konfiguracja linuxa i środowiska ros2 na laptopie do zdalnego sterowania
 
 30.03.2026 - spotkanie grupowe (A, Mt) - skonfigurowanie zdalnego połączenia ros2 na dwóch komputerach
 
-31.03.2026 - spotkanie z klinetem (A, Mt) - spotkanie w CI TASK z Radkiem i Pankiewiczem w celu omowienia postepow prokektu 
+31.03.2026 - spotkanie z klinetem (A, Mt) - spotkanie w CI TASK z Radkiem i Pankiewiczem w celu omowienia postepow prokektu i prokektu strownika pcb
 
 01.04.2026 - spotkanie grupowe (A, Mt) - zlutowanie nowych silników z enkoderami, podłączanie ich do nowej platformy, opracowanie nowego schematu podłączeń elektrycznych, praca nad sterowaniem lidarem ze zdalnego komputera
+
+09.04.2026 - spitkanie grupowe (A, Mt) - konfigruacja srodowiska ros, projekt pcb 
+
+16.04.2026 - spitkanie grupowe (A, Mt) - konfigruacja srodowiska ros, wprowadzanie poprawek do projetu pc
 
 28.04.2026 - spotkanie z klientem - spotkanie lokalne w CHIP z Radkiem
 
@@ -55,6 +58,12 @@ maile od arex
 
 21.05.2026 - spotkanie frupowe (A, Mt) - poprawa lutowania komponetow na płytce pcb
 
-01.06.2026 - spotkanie z klientem - spotkanie z prowadzacym proejkt z firmy oraz opienkunem w celu przedstawienia wyników i prezentacji
+26.05.2026 - spotkanie grupowe (A, Mt) -  złozenie wydrukownaych elemntow i konfiguracja elementow
+
+29.05.2026 - spotkanie grupowe (A, Mt) - ...
+
+30.05.2026 - spotkanie grupowe (A, Mt) - ...
+
+01.06.2026 - spotkanie z klientem - spotkanie z prowadzacym opoekunem z firmy oraz prowadzącym w celu przedstawienia wyników i prezentacji
 
 
