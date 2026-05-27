@@ -31,20 +31,25 @@ class ControlPanel(Node):
             print("System SLAM już działa!")
             return
             
-        print(">>> Uruchamiam system SLAM i RViz na PC...")
+        print(">>> Uruchamiam system SLAM i RViz w tle...")
+        print(">>> (Logi z tego procesu znajdziesz w pliku 'slam_log.txt')")
         current_dir = os.path.dirname(os.path.realpath(__file__))
         slam_launch_file = os.path.join(current_dir, 'pc_slam.launch.py')
         
-        # Odpalamy jako osobną grupę procesów, żeby łatwo było zamknąć wszystko naraz
+        # Tworzymy plik na logi, żeby oczyścić terminal
+        self.log_file = open(os.path.join(current_dir, 'slam_log.txt'), 'w')
+        
+        # Odpalamy proces z przekierowaniem wyjścia do pliku
         self.slam_process = subprocess.Popen(
             ["ros2", "launch", slam_launch_file], 
-            preexec_fn=os.setsid
+            preexec_fn=os.setsid,
+            stdout=self.log_file,
+            stderr=subprocess.STDOUT # Błędy też lecą do pliku
         )
 
     def stop_slam(self):
         print(">>> Zatrzymuję system SLAM...")
         if self.slam_process is not None:
-            # Wysyłamy sygnał zamknięcia (Ctrl+C) do całej grupy procesów launch.py
             try:
                 os.killpg(os.getpgid(self.slam_process.pid), signal.SIGINT)
                 self.slam_process.wait(timeout=5.0)
@@ -52,12 +57,14 @@ class ControlPanel(Node):
                 pass
             self.slam_process = None
             
-        # Dodatkowe twarde czyszczenie na wszelki wypadek
+            # Zamykamy plik z logami
+            if hasattr(self, 'log_file') and not self.log_file.closed:
+                self.log_file.close()
+                
         subprocess.run(["pkill", "-9", "-f", "slam_toolbox"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-9", "-f", "rf2o_laser_odometry"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-9", "-f", "rviz2"], stderr=subprocess.DEVNULL)
         print("SLAM całkowicie wyłączony.")
-
     def shutdown_system(self):
         """Zamykanie wszystkiego przed wyjściem"""
         print("\n[ZAMYKANIE] Czyszczenie procesów na PC...")
