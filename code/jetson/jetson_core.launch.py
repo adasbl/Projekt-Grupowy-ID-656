@@ -16,13 +16,6 @@ def generate_launch_description():
         )
     )
 
-    # 2. Transformacja: base_link -> laser
-    tf_base_to_laser = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'laser'],
-        output='screen'
-    )
     
     # 3. Mostek UART (komunikacja z STM32)
     uart_bridge = ExecuteProcess(
@@ -31,7 +24,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        tf_base_to_laser,
         lidar_launch,
         uart_bridge
     ])
