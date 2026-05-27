@@ -73,3 +73,8 @@ https://botland.com.pl/podwozia-robotow/11605-velleman-vma500-2wd-2-kolowe-podwo
 https://botland.com.pl/podwozia-robotow/3179-dfrobot-miniq-2wd-2-kolowe-podwozie-robota-z-napedem-6959420900565.html
 
 ########################################################################
+
+146153-1150 Antena; Bluetooth,WiFi,ZigBee; 2,8dBi,3,7dBi; liniowa; na taśmę
+https://www.tme.eu/pl/details/1461531150/anteny-wifi-bluetooth/molex/146153-1150/
+
+Karta sieciowa INTEL 8265NGW Dual Band Wireless-AC 8265 M.2 Wi-Fi 5 867Mbps
