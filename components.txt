@@ -75,6 +75,9 @@ https://botland.com.pl/podwozia-robotow/3179-dfrobot-miniq-2wd-2-kolowe-podwozie
 ########################################################################
 
 146153-1150 Antena; Bluetooth,WiFi,ZigBee; 2,8dBi,3,7dBi; liniowa; na taśmę
+
+Karta sieciowa INTEL 8265NGW
+
+Anteny:
 https://www.tme.eu/pl/details/1461531150/anteny-wifi-bluetooth/molex/146153-1150/
 
-Karta sieciowa INTEL 8265NGW Dual Band Wireless-AC 8265 M.2 Wi-Fi 5 867Mbps
