@@ -6,15 +6,15 @@
 
 07.11.2025 - spotkanie grupowe - podział pracy, zapoznanie się z komponentami, spisanie kosztorysu
 
-10.11.2025 - spotkanie grupowe (A,Mc) - napisanie wstępnych programów na STM32, instalacja ROS2 na maszynie wirtualnej
+10.11.2025 - spotkanie grupowe (A, Mc) - napisanie wstępnych programów na STM32, instalacja ROS2 na maszynie wirtualnej
 
 14.11.2025 - spotkanie z prowadzącym - podpisanie dokumentów oraz kontakt z sekretariatem odnośnie finansowania
 
-15.11.2025 - spotkanie grupowe (A,K) - instalacja i zapoznanie się z linuxem, próba instalacji ROS2
+15.11.2025 - spotkanie grupowe (A, K) - instalacja i zapoznanie się z linuxem, próba instalacji ROS2
 
-17.11.2025 - spotkanie grupowe (A,K,Mt) - dalsza walka z linuxem i ROS2, testowanie sterownika do silników z STM32s
+17.11.2025 - spotkanie grupowe (A, K, Mt) - dalsza walka z linuxem i ROS2, testowanie sterownika do silników z STM32s
 
-20.11.2025 - spotaknie z klientem (wszy)- wyjazd do firmy AREX wraz z kołem studenckim CHIP, prezentacja i zwiedzanie firmy, prezentacja szczegółów projektu i omówienie szczegółów co do finansowania i dalszego funkcjownowania
+20.11.2025 - spotkanie z klientem (wszy) - wyjazd do firmy AREX wraz z kołem studenckim CHIP, prezentacja i zwiedzanie firmy, prezentacja szczegółów projektu i omówienie szczegółów co do finansowania i dalszego funkcjonowania
 
 23.11.2025 - spotkanie grupowe (A, Mc) - złożenie układu z mikrokontrolerem, czujnikami, sterownikiem i silnikami, skonfigurowanie i test silników, walka ze sterownikiem
 
@@ -22,23 +22,48 @@
 
 03.12.2025 - spotkanie grupowe (wszy) - złożenie podstawy, napisanie programu do obsługi czujników, dalsze zmagania z lidarem
 
-13.01.2025 - spotaknie z klientem (A, K) - odebranie części od firmy
+13.01.2026 - spotkanie z klientem (A, K) - odebranie części od firmy
 
-14.01.2025 - spotkanie grupowe (Mt, K) - zapoznanie się z nowym komputerem jednopłytkowym otrzymanym od Firmy
+14.01.2026 - spotkanie grupowe (Mt, K) - zapoznanie się z nowym komputerem jednopłytkowym otrzymanym od Firmy
 
-21.01.2025 - spotkanie grupowe (wszy) - wszystko 
+21.01.2026 - spotkanie grupowe (wszy) - wszystko 
 
-23.01.2025 - spotkanie grupowe (wszy) - umieszczenie oraz sprzęgnięcie enkoderów zliczających wykonane obroty kół, implementacja regulatora PID sterującego obrotem kół, wykonanie schematów elektrycznego oraz blokowego oraz kontynuacja uzupełniania dokumentacji, implementacja komunikacji pomiędzy STM32 a ESP32, w tym komunikacji bezprzewodowej, napisanie biblioteki do odczytu danych z żyroskopu oraz akcelerometru.
+23.01.2026 - spotkanie grupowe (wszy) - umieszczenie oraz sprzęgnięcie enkoderów zliczających wykonane obroty kół, implementacja regulatora PID sterującego obrotem kół, wykonanie schematów elektrycznego oraz blokowego oraz kontynuacja uzupełniania dokumentacji, implementacja komunikacji pomiędzy STM32 a ESP32, w tym komunikacji bezprzewodowej, napisanie biblioteki do odczytu danych z żyroskopu oraz akcelerometru.
 
-[...]
-maile od arex
+02.03.2026 - spotkanie z klientem (wszy) - spotkanie wszystkich grup arexowych w CI TASK
 
-04.03.2026 - spotkanie grupowe (A, Mt) - ...
+04.03.2026 - spotkanie grupowe (A, Mt) - ogarnianie rosa
 
 11.03.2026 - spotkanie grupowe (A, Mt) - pisanie kodu stm32
+
+17.03.2026 - spotkanie grupowe (A, Mt) - konfiguracja autostartu rosa 
 
 25.03.2026 - spotkanie grupowe (A, Mt) - instalacja i konfiguracja linuxa i środowiska ros2 na laptopie do zdalnego sterowania
 
 30.03.2026 - spotkanie grupowe (A, Mt) - skonfigurowanie zdalnego połączenia ros2 na dwóch komputerach
 
+31.03.2026 - spotkanie z klinetem (A, Mt) - spotkanie w CI TASK z Radkiem i Pankiewiczem w celu omowienia postepow prokektu i prokektu strownika pcb
+
 01.04.2026 - spotkanie grupowe (A, Mt) - zlutowanie nowych silników z enkoderami, podłączanie ich do nowej platformy, opracowanie nowego schematu podłączeń elektrycznych, praca nad sterowaniem lidarem ze zdalnego komputera
+
+09.04.2026 - spitkanie grupowe (A, Mt) - konfigruacja srodowiska ros, projekt pcb 
+
+16.04.2026 - spitkanie grupowe (A, Mt) - konfigruacja srodowiska ros, wprowadzanie poprawek do projetu pc
+
+28.04.2026 - spotkanie z klientem - spotkanie lokalne w CHIP z Radkiem
+
+15.04.2026 - spotkanie grupowe (A, Mt) - lutowanie płytki pcb 
+
+18.05.2026 - spotkanie z klientem - spotkanie w CHIP (Radek zdalnie)
+
+21.05.2026 - spotkanie frupowe (A, Mt) - poprawa lutowania komponetow na płytce pcb
+
+26.05.2026 - spotkanie grupowe (A, Mt) -  złozenie wydrukownaych elemntow i konfiguracja elementow
+
+29.05.2026 - spotkanie grupowe (A, Mt) - ...
+
+30.05.2026 - spotkanie grupowe (A, Mt) - ...
+
+01.06.2026 - spotkanie z klientem - spotkanie z prowadzacym opoekunem z firmy oraz prowadzącym w celu przedstawienia wyników i prezentacji
+
+
