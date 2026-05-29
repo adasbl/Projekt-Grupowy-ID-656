@@ -25,8 +25,8 @@ PC4 - USART3_TX
 PC5 - USART3_RX
 
 GPIO:
-gpio input:
-PC13 - B1
+gpio EXTI13:
+PC13 - B1 - PullUp, Interupt on Falling Edge
 gpio output:
 PC1 - D1
 PC2 - D2

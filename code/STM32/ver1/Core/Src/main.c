@@ -1,4 +1,4 @@
-w/* USER CODE BEGIN Header */
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -48,17 +48,18 @@ w/* USER CODE BEGIN Header */
 
 /* USER CODE BEGIN PV */
 
-int pwm_base = 900;   // Bazowa prędkość (0-1000)
+int target_pwm_base = 600; 		// Base speed (0-1000)
+int current_pwm_base = 0;
 
-float Kp = 25.0;      // Wzmocnienie proporcjonalne
-float Ki = 0.2;       // Wzmocnienie całkujące
-float calka = 0;      // Skumulowany błąd
+float Kp = 7.0;      // Proportional gain
+float Ki = 0.2;       // Integral gain
+float calka = 0;      // Accumulated error (Integral)
 
 int16_t prev_licznik1 = 0;
 int16_t prev_licznik2 = 0;
 int32_t prev_czas = 0;
 
-char robot_state = '0';		// '0'-prosto, '1'-prawo, '2'-lewo, '3'-stop
+int robot_state = 0;		// '0'-straight, '1'-right, '2'-left, '3'-backward, '4'-stop
 
 volatile int16_t current_cnt1, current_cnt2;
 volatile int16_t speed1, speed2;
@@ -75,8 +76,8 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// FUNKCJA STEROWANIA PWM
-// PC6=CH1, PC7=CH2 (Silnik 1), PC8=CH3, PC9=CH4 (Silnik 2)
+// PWM CONTROL FUNCTION
+// PC6=CH1, PC7=CH2 (Motor 1), PC8=CH3, PC9=CH4 (Motor 2)
 void pwm(int s1_m1, int s1_m2, int s2_m1, int s2_m2) {
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, s1_m1);
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, s1_m2);
@@ -84,15 +85,7 @@ void pwm(int s1_m1, int s1_m2, int s2_m1, int s2_m2) {
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, s2_m2);
 }
 
-// FUNKCJA RUSZANIA Z MIEJSCA
-void ruszanie(){
-    for (int i = 600; i <= pwm_base; i += 10) {
-        pwm(i, 0, i, 0);
-        HAL_Delay(20);
-    }
-}
-
-// FUNKCJA OGRANICZAJĄCA WARTOŚCI DO DANEGO PRZEDZIALU
+// FUNCTION LIMITING VALUES TO A GIVEN RANGE
 int clamp(int value, int min, int max) {
     if (value < min) return min;
     if (value > max) return max;
@@ -136,20 +129,20 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // USTAWIANIE OKRESU
+  // SETTING THE PERIOD
       __HAL_TIM_SET_AUTORELOAD(&htim8, 999);
 
-      // START PWM DLA OBU SILNIKÓW (4 kanały na TIM8)
+      // START PWM FOR BOTH MOTORS (4 channels on TIM8)
       HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
       HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
       HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
       HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 
-      // START SPRZĘTOWEGO ZLICZANIA ENKODERÓW
+      // START HARDWARE ENCODER COUNTING
       HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
       HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 
-      pwm(0,0,0,0); // silniki stoją na starcie
+      pwm(0,0,0,0); // motors are stopped at startup
 
   /* USER CODE END 2 */
 
@@ -158,56 +151,59 @@ int main(void)
   while (1)
   {
 
-	  if (HAL_GetTick() - prev_czas >= 50) // Pomiar co 50ms
+	  if (HAL_GetTick() - prev_czas >= 25) // Measurement every 25ms
 	        {
 	            prev_czas = HAL_GetTick();
 
-	            // POBIERANIE DANYCH Z ENKODERÓW
+	            // FETCHING DATA FROM ENCODERS
 	            current_cnt1 = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
 	            current_cnt2 = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
 
-	            // OBLICZENIE PRĘDKOŚCI
-	            speed1 = current_cnt1 - prev_licznik1; // Rzutowanie danych na int16_t - aby poprawnie liczyć różnicę przy przepełnieniu licznika
-	            speed2 = -(current_cnt2 - prev_licznik2);
+	            // SPEED CALCULATION
+	            speed1 = -(current_cnt1 - prev_licznik1); // Casting data to int16_t - to correctly calculate the difference upon counter overflow
+	            speed2 = (current_cnt2 - prev_licznik2);
 
 	            prev_licznik1 = current_cnt1;
 	            prev_licznik2 = current_cnt2;
 
-	            // LOGIKA STEROWANIA
+	            // CONTROL LOGIC
 
-				if (robot_state == '0') // JAZDA PROSTO z regulacją PI
+				if (robot_state == 0) // DRIVING STRAIGHT with PI control
 				{
-					float uchyb = (float)speed1 - (float)speed2;
+					if (current_pwm_base < target_pwm_base) {
+						current_pwm_base += 25; // Increase by 25 until it reaches 600
+					}
+
+					uchyb = (float)speed1 - (float)speed2;
 					calka += uchyb;
 
-					// Anty-windup (limitowanie całki)
+					// Anti-windup (integral limiting)
 					if (calka > 500) calka = 500;
 					if (calka < -500) calka = -500;
 
 					int korekcja = (int)(uchyb * Kp + calka * Ki);
 
-					int p1 = clamp(pwm_base - korekcja, 0, 1000);
-					int p2 = clamp(pwm_base + korekcja, 0, 1000);
+					int p1 = clamp(current_pwm_base - korekcja, 0, 1000);
+					int p2 = clamp(current_pwm_base + korekcja, 0, 1000);
 
 					pwm(p1, 0, p2, 0);
 				}
-				else if (robot_state == '1') // PRAWO
+				else if (robot_state == 1) // RIGHT
 				{
 					pwm(800, 0, 0, 800);
 				}
-				else if (robot_state == '2') // LEWO
+				else if (robot_state == 2) // LEFT
 				{
 					pwm(0, 800, 800, 0);
 				}
-				else if (robot_state == '3') // STOP
-				{
-					pwm(0,0,0,0);
-				}
-				else if (robot_state == '4') // JAZDA DO TYLU
+				else if (robot_state == 3) // BACK
 				{
 					pwm(0, 800, 0, 800);
 				}
-
+				else if (robot_state == 4) // STOP
+				{
+					pwm(0,0,0,0);
+				}
 	        }
 
     /* USER CODE END WHILE */
@@ -262,7 +258,24 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == B1_Pin)
+	{
+		static uint32_t last_interrupt_time = 0;
+		if (HAL_GetTick() - last_interrupt_time > 200)
+			{
+			robot_state++;
+			__HAL_TIM_SET_COUNTER(&htim2, 0);
+			__HAL_TIM_SET_COUNTER(&htim3, 0);
+			current_cnt1 = current_cnt2 = 0;
+			prev_licznik1 = prev_licznik2 = 0;
+			current_pwm_base = 0;
+			if (robot_state > 4) robot_state = 0;
+			}
+		last_interrupt_time = HAL_GetTick();
+	}
+}
 /* USER CODE END 4 */
 
 /**
