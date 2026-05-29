@@ -8,12 +8,12 @@
 * **Alternatywy**: Raspberry Pi 5 oraz BeagleBone® AI-64.
 
 ### Skaner laserowy (LIDAR)
-* **RPLiDAR A1M8-R6 360**: Skaner laserowy 360 stopni, 12m.
+* **RPLiDAR A1 Skaner laserowy 360 stopni, 12m.**
 
 ### Sterowanie i zasilanie
 * **Sterowniki silników**:
-    * SB Pi Motor Shield SKU 08001.
     * L298N (dwukanałowy sterownik silników 12V 2A).
+    * DRV8833 
 * **Zasilanie**:
     * Waveshare UPS Module 3S (moduł zasilacza bezprzerwowego dla Jetson Nano).
     * Wymagane złącze: XH 2.54 - 2 piny.
