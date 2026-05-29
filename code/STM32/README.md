@@ -15,7 +15,8 @@ Program inicjujący enkodery i zliczający ich wartości
 (do użycia w trybie debugowania).
 
 ## uartTest
-Program testujący komunikację UART.
+Program testujący komunikację UART pomiędzy Jetson Nano a STM32 (uart3). Dane są printowane do konsoli (uart2)  
+(do użycia z nucleo, płytka wbudowana nie ma wyprowadzone uart2).
 
 ## gyroConsole
 Program do obsługi i testowania żyroskopu przez konsolę.

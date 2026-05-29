@@ -1,0 +1,11 @@
+PINOUT
+
+NVIC USART2 global interrupts i USART3 global interrupts on 
+
+UART2 - Asynchronus
+PA2 - USART3_TX
+PA3 - USART3_RX
+
+UART3 - Asynchronus
+PC4 - USART3_TX
+PC5 - USART3_RX
