@@ -63,7 +63,7 @@ int16_t prev_licznik1 = 0;
 int16_t prev_licznik2 = 0;
 int32_t prev_czas = 0;
 
-int robot_state = 0;      // '0'-straight, '1'-right, '2'-left, '3'-backward, '4'-stop
+int robot_state = 0;      // '0'-STOP, '1'-FOREWARD, '2'-RIGHT, '3'-LEFT, '4'-BACK
 
 int deadband = 400;       // Minimum PWM value to overcome motor static friction
 float antyWindUp = 2000;  // Maximum limit for the integral term
@@ -177,30 +177,30 @@ int main(void)
 	            prev_licznik2 = current_cnt2;
 
 	            // 1. SET TARGET SPEEDS BASED ON ROBOT STATE
-				if (robot_state == 0) // DRIVING STRAIGHT
-				{
-					target_speed_L = 22;
-					target_speed_R = 22;
-				}
-				else if (robot_state == 1) // RIGHT (point turn)
-				{
-					target_speed_L = 22;
-					target_speed_R = -22;
-				}
-				else if (robot_state == 2) // LEFT (point turn)
-				{
-					target_speed_L = -22;
-					target_speed_R = 22;
-				}
-				else if (robot_state == 3) // BACKWARD
-				{
-					target_speed_L = -22;
-					target_speed_R = -22;
-				}
-				else if (robot_state == 4) // STOP
+	            if (robot_state == 0) // STOP
 				{
 					target_speed_L = 0;
 					target_speed_R = 0;
+				}
+				else if (robot_state == 1) // FOREWARD
+				{
+					target_speed_L = 22;
+					target_speed_R = 22;
+				}
+				else if (robot_state == 2) // RIGHT (point turn)
+				{
+					target_speed_L = 22;
+					target_speed_R = -22;
+				}
+				else if (robot_state == 3) //  LEFT (point turn)
+				{
+					target_speed_L = -22;
+					target_speed_R = 22;
+				}
+				else if (robot_state == 4) // BACK
+				{
+					target_speed_L = -22;
+					target_speed_R = -22;
 				}
 
 				// 2. PI CONTROLLER FOR LEFT MOTOR
