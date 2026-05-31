@@ -25,4 +25,7 @@ Program do obsługi i testowania żyroskopu przez konsolę.
 Sterowanie ruchem i skręcaniem z wykorzystaniem nowych silników i enkoderów (timery w trybie enkodera) – zmiana kierunku jazdy przyciskiem (na przerwaniach). Dla jazdy prosto regulator PID oraz stopniowe rozpędzanie robota (soft-start).
 
 ## ver2
+Sterowanie ruchem z wykorzystaniem niezależnych regulatorów PI dla obu silników, operujących na docelowej prędkości wyrażonej w impulsach enkodera. Zmiana kierunku jazdy (prosto, obrót w miejscu, tył) realizowana przyciskiem na przerwaniach, obsługiwana przez algorytm z kompensacją strefy nieczułości (deadband).
+
+## ver3
 Algorytm jazdy wykorzystujący zadane wartości prędkości kątowej i liniowej, zgodnie z ramką `Twist` odbieraną przerwaniami przez UART.
