@@ -153,6 +153,7 @@ int main(void)
       // MOTORS STOPPED AT STARTUP
       pwm(0,0,0,0);
 
+      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -212,7 +213,7 @@ int main(void)
 				if (calka_L < -antyWindUp) calka_L = -antyWindUp;
 
 				// Force clear the integral term when stopped
-				if (robot_state == 4) calka_L = 0;
+				if (robot_state == 0) calka_L = 0;
 
 				int p1 = (int)(uchyb_L * Kp + calka_L * Ki);
 
@@ -225,7 +226,7 @@ int main(void)
 				if (calka_R < -antyWindUp) calka_R = -antyWindUp;
 
 				// Force clear the integral term when stopped
-				if (robot_state == 4) calka_R = 0;
+				if (robot_state == 0) calka_R = 0;
 
 				int p2 = (int)(uchyb_R * Kp + calka_R * Ki);
 
