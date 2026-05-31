@@ -9,3 +9,8 @@ Mateusz Kuczerowski
 Krzysztof Toczyński
 
 Maciej Domeradzki
+
+
+
+hotspot: jetson_hotspot
+hasło: jetson_hotspot
