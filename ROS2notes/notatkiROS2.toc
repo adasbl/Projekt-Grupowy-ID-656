@@ -1,4 +1,0 @@
-\babel@toc {polish}{}\relax 
-\contentsline {section}{\numberline {1}Informacje wstępne}{2}{section.1}%
-\contentsline {section}{\numberline {2}Konfiguracja Środowiska}{2}{section.2}%
-\contentsline {section}{\numberline {3}Węzły (Nodes)}{2}{section.3}%
