@@ -22,10 +22,10 @@ Program testujący komunikację UART pomiędzy Jetson Nano a STM32 (uart3). Dane
 Program do obsługi i testowania żyroskopu przez konsolę.
 
 ## ver1
-Sterowanie ruchem i skręcaniem z wykorzystaniem nowych silników i enkoderów (timery w trybie enkodera) – zmiana kierunku jazdy przyciskiem (na przerwaniach). Dla jazdy prosto regulator PID oraz stopniowe rozpędzanie robota (soft-start).
+Sterowanie ruchem i skręcaniem z wykorzystaniem nowych silników i enkoderów (timery w trybie enkodera) – zmiana kierunku jazdy przyciskiem (na przerwaniach). Dla jazdy prosto regulator PID z Anti-Windup oraz stopniowe rozpędzanie robota (soft-start).
 
 ## ver2
-Sterowanie ruchem z wykorzystaniem niezależnych regulatorów PI dla obu silników, operujących na docelowej prędkości wyrażonej w impulsach enkodera. Zmiana kierunku jazdy (prosto, obrót w miejscu, tył) realizowana przyciskiem na przerwaniach, obsługiwana przez algorytm z kompensacją strefy nieczułości (deadband).
+Sterowanie ruchem z wykorzystaniem niezależnych regulatorów PI dla obu silników wyposażonych w kompensację strefy nieczułości (deadband) oraz Anti-Windup, na podstawie docelowej prędkości (wyrażonej w impulsach enkodera). Zmiana kierunku jazdy (prosto, obrót w miejscu, tył) realizowana przyciskiem na przerwaniach, obsługiwana przez algorytm z kompensacją strefy nieczułości (deadband). 
 
 ## ver3
-Algorytm jazdy wykorzystujący zadane wartości prędkości kątowej i liniowej, zgodnie z ramką `Twist` odbieraną przerwaniami przez UART.
+Algorytm jazdy wykorzystujący zadane wartości prędkości kątowej i liniowej (wyrażonych w m/s i rad/s)) - zgodnie z ramką `Twist` odbieraną przerwaniami przez UART. Prędkości automatycznie przeliczane na podstawie zaimplementowanych parametrów fizycznych platformy. Regulatory PI z kompensacją strefy nieczułości (deadband) oraz Anti-Windup.
