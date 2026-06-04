@@ -370,3 +370,19 @@ class RobotNavigation(Node):
         for p in self.path:
             pose = PoseStamped(); pose.pose.position.x = p[0]; pose.pose.position.y = p[1]; msg.poses.append(pose)
         self.path_pub.publish(msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+    nav_node = RobotNavigation()
+    
+    try:
+        rclpy.spin(nav_node)
+    except KeyboardInterrupt:
+        nav_node.get_logger().info("Zatrzymano nawigację (Ctrl+C)")
+    finally:
+        nav_node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
