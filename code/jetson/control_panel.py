@@ -142,19 +142,24 @@ def main(args=None):
                 except KeyboardInterrupt:
                     print("\nZatrzymano proces nawigacji.")
                 finally:
-                    # 1. ZEROWANIE PRĘDKOŚCI przy wyjściu (zabezpieczenie)
+                    # 1. ZEROWANIE PRĘDKOŚCI przy wyjściu
                     panel.stop_robot()
                     
-                    # 2. AUTOMATYCZNY ZAPIS MAPY DO FOLDERU IMAGES <-- NOWE
+                    # 2. ZAPIS MAPY DO OSOBNEGO PODFOLDERU <-- ZMIENIONE
                     print("\n>>> Trwa zapisywanie końcowej mapy...")
                     try:
-                        # Tworzenie ścieżki do folderu 'images' w katalogu projektu
-                        images_dir = os.path.join(current_dir, 'images')
-                        os.makedirs(images_dir, exist_ok=True)  # Tworzy folder jeśli nie istnieje
-                        
-                        # Generowanie unikalnej nazwy pliku na podstawie aktualnego czasu (np. mapa_20261104_153022)
+                        # Generowanie znacznika czasu dla nazwy folderu
                         timestamp = time.strftime("%Y%m%d_%H%M%S")
-                        map_file_path = os.path.join(images_dir, f"mapa_{timestamp}")
+                        
+                        # Główna ścieżka do images oraz ścieżka do unikalnego podfolderu dla tego przejazdu
+                        images_dir = os.path.join(current_dir, 'images')
+                        run_folder = os.path.join(images_dir, f"run_{timestamp}")
+                        
+                        # Tworzenie całego drzewa folderów (np. images/run_20261104_153022)
+                        os.makedirs(run_folder, exist_ok=True)  
+                        
+                        # Zapis plików pod nazwą "mapa" wewnątrz nowo utworzonego podfolderu
+                        map_file_path = os.path.join(run_folder, "mapa")
                         
                         # Wywołanie komendy ROS2 map_saver_cli
                         subprocess.run([
@@ -162,9 +167,9 @@ def main(args=None):
                             "-f", map_file_path
                         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         
-                        print(f"[PANEL] Sukces! Mapa i zdjęcie (.pgm) zostały zapisane w: {images_dir}")
+                        print(f"[PANEL] Sukces! Mapa i pliki konfiguracyjne zostały zapisane w: {run_folder}")
                         
-                        # (Opcjonalnie) Konwersja PGM do standardowego PNG (jeśli posiadasz bibliotekę Pillow)
+                        # (Opcjonalnie) Konwersja PGM do standardowego PNG
                         try:
                             from PIL import Image
                             pgm_file = map_file_path + ".pgm"
@@ -172,9 +177,9 @@ def main(args=None):
                             if os.path.exists(pgm_file):
                                 with Image.open(pgm_file) as img:
                                     img.save(png_file)
-                                print(f"[PANEL] Wygenerowano również plik formatu .png")
+                                print(f"[PANEL] Wygenerowano również czytelny plik formatu .png")
                         except ImportError:
-                            pass # Jeśli nie ma zainstalowanego Pillow, zostaje domyślne zdjęcie .pgm
+                            pass # Ignoruj jeśli biblioteka Pillow nie jest zainstalowana
                             
                     except Exception as e:
                         print(f"[PANEL] Wystąpił błąd podczas próby zapisu mapy: {e}")
