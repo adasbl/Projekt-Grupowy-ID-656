@@ -162,8 +162,8 @@ int main(void)
           last_cmd_time = HAL_GetTick();
 
           // Obliczenie prędkości liniowych dla kół (m/s) z kinematyki
-          float v_L_mps = rxFrame.v_lin - (rxFrame.v_ang * WHEEL_BASE_M / 2.0f);
-          float v_R_mps = rxFrame.v_lin + (rxFrame.v_ang * WHEEL_BASE_M / 2.0f);
+          float v_L_mps = -rxFrame.v_lin + (rxFrame.v_ang * WHEEL_BASE_M / 2.0f);
+          float v_R_mps = -rxFrame.v_lin - (rxFrame.v_ang * WHEEL_BASE_M / 2.0f);
 
           // Przeliczenie m/s na impulsy na krok czasowy 25ms
           target_speed_L = (int)(v_L_mps * TICKS_PER_METER * DT_S);
