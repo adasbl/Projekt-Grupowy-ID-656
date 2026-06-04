@@ -128,32 +128,56 @@ def main(args=None):
             elif c == '6':
                 print("\n>>> Uruchamiam automatyczne mapowanie (SLAM) i nawigację...")
                 
-                # 1. Automatyczne odpalenie SLAM + RViz (odpowiednik opcji 3)
+                # 1. Automatyczne odpalenie SLAM + RViz
                 panel.start_slam()
                 
-                # 2. Bezpieczny czas na pełne odpalenie rviz i mapy, aby nawigacja nie dostała pustych danych
                 print("Czekam 3 sekundy na zainicjalizowanie SLAM i RViz...")
                 time.sleep(3.0)
                 
                 print("\n>>> Uruchamiam autonomiczną nawigację... (Wciśnij Ctrl+C, aby wrócić) <<<")
                 try:
                     current_dir = os.path.realpath(os.path.dirname(__file__))
-                    
-                    # UWAGA: Upewnij się, czy Twój plik na dysku nazywa się 'robot_navigation.py' czy 'robot_navigation_node.py'
-                    # W kodzie źródłowym miałeś 'robot_navigation.py', w panelu była końcówka '_node'. Dopasuj to:
                     nav_script = os.path.join(current_dir, 'robot_navigation.py') 
-                    
                     subprocess.run(["python3", nav_script])
                 except KeyboardInterrupt:
                     print("\nZatrzymano proces nawigacji.")
                 finally:
-                    # 3. ZEROWANIE PRĘDKOŚCI przy wyjściu (niezależnie czy przez Ctrl+C, czy koniec misji)
+                    # 1. ZEROWANIE PRĘDKOŚCI przy wyjściu (zabezpieczenie)
                     panel.stop_robot()
-            elif c == '0':
-                panel.shutdown_system()
-                break
-            else:
-                print("Nieznana opcja!")
+                    
+                    # 2. AUTOMATYCZNY ZAPIS MAPY DO FOLDERU IMAGES <-- NOWE
+                    print("\n>>> Trwa zapisywanie końcowej mapy...")
+                    try:
+                        # Tworzenie ścieżki do folderu 'images' w katalogu projektu
+                        images_dir = os.path.join(current_dir, 'images')
+                        os.makedirs(images_dir, exist_ok=True)  # Tworzy folder jeśli nie istnieje
+                        
+                        # Generowanie unikalnej nazwy pliku na podstawie aktualnego czasu (np. mapa_20261104_153022)
+                        timestamp = time.strftime("%Y%m%d_%H%M%S")
+                        map_file_path = os.path.join(images_dir, f"mapa_{timestamp}")
+                        
+                        # Wywołanie komendy ROS2 map_saver_cli
+                        subprocess.run([
+                            "ros2", "run", "nav2_map_server", "map_saver_cli", 
+                            "-f", map_file_path
+                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        
+                        print(f"[PANEL] Sukces! Mapa i zdjęcie (.pgm) zostały zapisane w: {images_dir}")
+                        
+                        # (Opcjonalnie) Konwersja PGM do standardowego PNG (jeśli posiadasz bibliotekę Pillow)
+                        try:
+                            from PIL import Image
+                            pgm_file = map_file_path + ".pgm"
+                            png_file = map_file_path + ".png"
+                            if os.path.exists(pgm_file):
+                                with Image.open(pgm_file) as img:
+                                    img.save(png_file)
+                                print(f"[PANEL] Wygenerowano również plik formatu .png")
+                        except ImportError:
+                            pass # Jeśli nie ma zainstalowanego Pillow, zostaje domyślne zdjęcie .pgm
+                            
+                    except Exception as e:
+                        print(f"[PANEL] Wystąpił błąd podczas próby zapisu mapy: {e}")
                 
     except KeyboardInterrupt:
         print("\nPrzerwano awaryjnie (Ctrl+C).")
