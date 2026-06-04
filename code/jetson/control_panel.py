@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Empty
+from geometry_msgs.msg import Twist  # <-- DODANY IMPORT
+from rclpy.signals import SignalHandlerOptions
 import subprocess
 import os
 import signal
@@ -13,6 +15,9 @@ class ControlPanel(Node):
         # Klienty do sterowania lidarem na Jetsonie (komunikacja przez Wi-Fi)
         self.start_motor_client = self.create_client(Empty, '/start_motor')
         self.stop_motor_client = self.create_client(Empty, '/stop_motor')
+        
+        # Publisher do zatrzymywania robota z poziomu panelu <-- DODANE
+        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         
         # Zmienne do śledzenia procesów odpalanych na PC
         self.slam_process = None
@@ -49,7 +54,7 @@ class ControlPanel(Node):
 
     def stop_slam(self):
         print(">>> Zatrzymuję system SLAM...")
-        if self.slam_process is not None:
+        if rclpy.ok():
             try:
                 os.killpg(os.getpgid(self.slam_process.pid), signal.SIGINT)
                 self.slam_process.wait(timeout=5.0)
@@ -65,16 +70,27 @@ class ControlPanel(Node):
         subprocess.run(["pkill", "-9", "-f", "rf2o_laser_odometry"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-9", "-f", "rviz2"], stderr=subprocess.DEVNULL)
         print("SLAM całkowicie wyłączony.")
+        
+    def stop_robot(self):
+        """Wysyła zerowe prędkości, aby natychmiast zatrzymać robota"""
+        msg = Twist()
+        msg.linear.x = 0.0
+        msg.angular.z = 0.0
+        self.cmd_vel_pub.publish(msg)
+        print("[PANEL] Wysłano sygnał stopu (Prędkość wyzerowana).")
+    
+    
     def shutdown_system(self):
         """Zamykanie wszystkiego przed wyjściem"""
         print("\n[ZAMYKANIE] Czyszczenie procesów na PC...")
         self.stop_slam()
+        self.stop_robot()
         subprocess.run(["pkill", "-9", "-f", "teleop_twist_keyboard"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-9", "-f", "robot_navigation_node.py"], stderr=subprocess.DEVNULL)
         print("Gotowe. Do widzenia!")
 
 def main(args=None):
-    rclpy.init(args=args)
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     panel = ControlPanel()
 
     try:
@@ -110,13 +126,29 @@ def main(args=None):
                 print("\n>>> Uruchamiam klawiaturę... (Wciśnij Ctrl+C, aby wrócić do menu) <<<")
                 subprocess.run(["ros2", "run", "teleop_twist_keyboard", "teleop_twist_keyboard"])
             elif c == '6':
+                print("\n>>> Uruchamiam automatyczne mapowanie (SLAM) i nawigację...")
+                
+                # 1. Automatyczne odpalenie SLAM + RViz (odpowiednik opcji 3)
+                panel.start_slam()
+                
+                # 2. Bezpieczny czas na pełne odpalenie rviz i mapy, aby nawigacja nie dostała pustych danych
+                print("Czekam 3 sekundy na zainicjalizowanie SLAM i RViz...")
+                time.sleep(3.0)
+                
                 print("\n>>> Uruchamiam autonomiczną nawigację... (Wciśnij Ctrl+C, aby wrócić) <<<")
                 try:
-                    current_dir = os.path.dirname(os.path.realpath(__file__))
-                    nav_script = os.path.join(current_dir, 'robot_navigation_node.py')
+                    current_dir = os.path.realpath(os.path.dirname(__file__))
+                    
+                    # UWAGA: Upewnij się, czy Twój plik na dysku nazywa się 'robot_navigation.py' czy 'robot_navigation_node.py'
+                    # W kodzie źródłowym miałeś 'robot_navigation.py', w panelu była końcówka '_node'. Dopasuj to:
+                    nav_script = os.path.join(current_dir, 'robot_navigation.py') 
+                    
                     subprocess.run(["python3", nav_script])
                 except KeyboardInterrupt:
-                    print("\nZatrzymano nawigację.")
+                    print("\nZatrzymano proces nawigacji.")
+                finally:
+                    # 3. ZEROWANIE PRĘDKOŚCI przy wyjściu (niezależnie czy przez Ctrl+C, czy koniec misji)
+                    panel.stop_robot()
             elif c == '0':
                 panel.shutdown_system()
                 break
