@@ -21,7 +21,7 @@ Maximum (peak) power demand of all components.
 | **STM32L476RGT6** | ~0.10 W | Maximum margin for microcontroller logic. |
 | **Pololu Motor (Left)** | ~2.16 W | LP series: 6 V × 0.36 A (powered at 5 V). |
 | **Pololu Motor (Right)** | ~2.16 W | LP series: 6 V × 0.36 A (powered at 5 V). |
-| **L298N Driver** | Negligible | Heat losses (minor at low current). |
+| **DRV8833 Driver** | Negligible | Heat losses (minor at low current). |
 
 ---
 
