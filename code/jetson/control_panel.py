@@ -128,48 +128,43 @@ def main(args=None):
             elif c == '6':
                 print("\n>>> Uruchamiam automatyczne mapowanie (SLAM) i nawigację...")
                 
-                # 1. Automatyczne odpalenie SLAM + RViz
-                panel.start_slam()
+                # --- 1. TWORZENIE FOLDERU NA LOGI I MAPY PRZED STARTEM ---
+                current_dir = os.path.realpath(os.path.dirname(__file__))
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                images_dir = os.path.join(current_dir, 'logs')
+                run_folder = os.path.join(images_dir, f"run_{timestamp}")
+                os.makedirs(run_folder, exist_ok=True)
                 
+                # Przekazanie ścieżki do robota poprzez zmienną środowiskową
+                env_vars = os.environ.copy()
+                env_vars["ROBOT_RUN_DIR"] = run_folder
+
+                # --- 2. URUCHOMIENIE SYSTEMÓW ---
+                panel.start_slam()
                 print("Czekam 3 sekundy na zainicjalizowanie SLAM i RViz...")
                 time.sleep(3.0)
                 
                 print("\n>>> Uruchamiam autonomiczną nawigację... (Wciśnij Ctrl+C, aby wrócić) <<<")
                 try:
-                    current_dir = os.path.realpath(os.path.dirname(__file__))
                     nav_script = os.path.join(current_dir, 'robot_navigation.py') 
-                    subprocess.run(["python3", nav_script])
+                    # Zwróć uwagę na argument env=env_vars !
+                    subprocess.run(["python3", nav_script], env=env_vars)
                 except KeyboardInterrupt:
                     print("\nZatrzymano proces nawigacji.")
                 finally:
-                    # 1. ZEROWANIE PRĘDKOŚCI przy wyjściu
+                    # --- 3. BEZPIECZNE WYJŚCIE I ZAPIS MAPY ---
                     panel.stop_robot()
                     
-                    # 2. ZAPIS MAPY DO OSOBNEGO PODFOLDERU <-- ZMIENIONE
                     print("\n>>> Trwa zapisywanie końcowej mapy...")
                     try:
-                        # Generowanie znacznika czasu dla nazwy folderu
-                        timestamp = time.strftime("%Y%m%d_%H%M%S")
-                        
-                        # Główna ścieżka do images oraz ścieżka do unikalnego podfolderu dla tego przejazdu
-                        images_dir = os.path.join(current_dir, 'images')
-                        run_folder = os.path.join(images_dir, f"run_{timestamp}")
-                        
-                        # Tworzenie całego drzewa folderów (np. images/run_20261104_153022)
-                        os.makedirs(run_folder, exist_ok=True)  
-                        
-                        # Zapis plików pod nazwą "mapa" wewnątrz nowo utworzonego podfolderu
                         map_file_path = os.path.join(run_folder, "mapa")
-                        
-                        # Wywołanie komendy ROS2 map_saver_cli
                         subprocess.run([
                             "ros2", "run", "nav2_map_server", "map_saver_cli", 
                             "-f", map_file_path
                         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         
-                        print(f"[PANEL] Sukces! Mapa i pliki konfiguracyjne zostały zapisane w: {run_folder}")
+                        print(f"[PANEL] Sukces! Mapa została zapisana w: {run_folder}")
                         
-                        # (Opcjonalnie) Konwersja PGM do standardowego PNG
                         try:
                             from PIL import Image
                             pgm_file = map_file_path + ".pgm"
@@ -177,9 +172,8 @@ def main(args=None):
                             if os.path.exists(pgm_file):
                                 with Image.open(pgm_file) as img:
                                     img.save(png_file)
-                                print(f"[PANEL] Wygenerowano również czytelny plik formatu .png")
                         except ImportError:
-                            pass # Ignoruj jeśli biblioteka Pillow nie jest zainstalowana
+                            pass
                             
                     except Exception as e:
                         print(f"[PANEL] Wystąpił błąd podczas próby zapisu mapy: {e}")

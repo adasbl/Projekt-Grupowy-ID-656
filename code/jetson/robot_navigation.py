@@ -1,3 +1,5 @@
+import os
+import datetime
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import OccupancyGrid, Path
@@ -62,6 +64,14 @@ class RobotNavigation(Node):
 
         self.timer = self.create_timer(0.1, self.control_loop) # callback control loop every 0.1 s
         self.get_logger().info("Waiting for map...")
+        
+        # Inicjalizacja pliku z logami debugowania
+        self.debug_log_file = None
+        run_dir = os.environ.get("ROBOT_RUN_DIR")
+        if run_dir:
+            log_path = os.path.join(run_dir, "nav_debug.txt")
+            self.debug_log_file = open(log_path, "w")
+            self.write_log("=== START SYSTEMU NAWIGACJI ===")
 
     def map_callback(self, msg):
         '''Transform SLAM into map'''
@@ -268,6 +278,8 @@ class RobotNavigation(Node):
         # avoid obstacles
         obstacles = self.scan_to_coords(x, y, theta, self.latest_scan)
         best_v, best_w = self.dwa_control(x, y, theta, self.current_v, self.current_w, target_x, target_y, obstacles)
+        
+        self.write_log(f"POZYCJA: x={x:.2f}, y={y:.2f} | CEL: x={target_x:.2f}, y={target_y:.2f} | PRED: v={best_v:.4f}, w={best_w:.4f}")
 
         msg = Twist()
         msg.linear.x, msg.angular.z = best_v, best_w
@@ -316,7 +328,8 @@ class RobotNavigation(Node):
             best_v = 0.0
             best_w = cfg.max_angular_vel * 0.5 * self._recovery_dir
             self._recovery_dir *= -1.0
-
+            self.write_log("[DWA WARN] Brak bezpiecznej trasy (best_score=-inf)! Wymuszam awaryjny obrot.")
+            
         return best_v, best_w
 
 
@@ -370,6 +383,19 @@ class RobotNavigation(Node):
         for p in self.path:
             pose = PoseStamped(); pose.pose.position.x = p[0]; pose.pose.position.y = p[1]; msg.poses.append(pose)
         self.path_pub.publish(msg)
+        
+    def write_log(self, msg):
+        """For saving logs with timestamp"""
+        if self.debug_log_file:
+            time_str = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            self.debug_log_file.write(f"[{time_str}] {msg}\n")
+            self.debug_log_file.flush()
+            
+    def destroy_node(self):
+        if self.debug_log_file:
+            self.write_log("=== ZAKONCZENIE PRACY ===")
+            self.debug_log_file.close()
+        super().destroy_node()
 
 def main(args=None):
     rclpy.init(args=args)
