@@ -29,7 +29,7 @@ sudo apt install ros-humble-navigation2 \
                  ros-humble-teleop-twist-keyboard \
                  python3-colcon-common-extensions
 ```
-### Krok 3: Budowa środowiska roboczego oraz konfiguracja 
+### Krok 3: Budowa środowiska roboczego oraz pobranie wymaganych plików
 
 ```bash
 # 1. Utworzenie struktury folderów
@@ -39,9 +39,6 @@ cd ~/ros2_ws/src
 # 2. Pobranie kodu z GitHuba
 git clone https://github.com/matrix1798/robot_sofware.git
 
-# 3. Przejście do głównego folderu przestrzeni roboczej i budowa
-cd ~/ros2_ws
-colcon build --symlink-install
 ```
 
 ### Krok 4: Konfiguracja sieci:
