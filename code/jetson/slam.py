@@ -97,7 +97,7 @@ def generate_launch_description():
         lidar_launch,
         rf2o_node,
         slam_toolbox,
-	rviz,
+	    rviz,
         record_bag,
         uart_bridge
     ])
