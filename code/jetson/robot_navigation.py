@@ -256,29 +256,34 @@ class RobotNavigation(Node):
         self.check_if_stuck(x, y)
         if not self.path: return
 
-        target_x, target_y = self.path[self.target_idx]
-        # goal reached
-        if math.hypot(target_x - x, target_y - y) < self.near_target_pos:
-            self.target_idx += 1 # next point    
-
-            if self.target_idx >= len(self.path):
-                self.path = []
-                self.cmd_vel_pub.publish(Twist())
-                self.current_v, self.current_w = 0.0, 0.0
-                
-                # explore mode -> find new goal point
-                if self.is_exploring:
-                    self.trigger_exploration()
-                else:
-                    self.get_logger().info("Manual goal reached.")
-                return
-                
+        while self.target_idx < len(self.path):
             target_x, target_y = self.path[self.target_idx]
+            if math.hypot(target_x - x, target_y - y) < self.near_target_pos:
+                self.target_idx += 1 # Punkt odhaczony, sprawdzamy następny
+            else:
+                break # Znaleźliśmy punkt wystarczająco daleko (powyżej 30 cm), celujemy w niego
+                
+        # Sprawdzanie, czy dotarliśmy do samego końca trasy
+        if self.target_idx >= len(self.path):
+            self.path = []
+            self.cmd_vel_pub.publish(Twist())
+            self.current_v, self.current_w = 0.0, 0.0
+            
+            # explore mode -> find new goal point
+            if self.is_exploring:
+                self.trigger_exploration()
+            else:
+                self.get_logger().info("Manual goal reached.")
+            return
+            
+        # Ostateczny cel dla algorytmu DWA w tej iteracji
+        target_x, target_y = self.path[self.target_idx]
 
         # avoid obstacles
         obstacles = self.scan_to_coords(x, y, theta, self.latest_scan)
         best_v, best_w = self.dwa_control(x, y, theta, self.current_v, self.current_w, target_x, target_y, obstacles)
-        
+
+        # Log po obliczeniu best_v, best_w
         self.write_log(f"POZYCJA: x={x:.2f}, y={y:.2f} | CEL: x={target_x:.2f}, y={target_y:.2f} | PRED: v={best_v:.4f}, w={best_w:.4f}")
 
         msg = Twist()

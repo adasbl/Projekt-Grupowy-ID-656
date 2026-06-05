@@ -18,16 +18,16 @@ class DWAConfig:
     # using for predict velocity: v = a * dt
     dt = 0.1
     # lower -> worse prediction 
-    predict_time = 4.0
+    predict_time = 5.0
 
     # weights to adjust (increase if specific paramater is more important)
-    w_heading   = 1.0 # angular direction to target point
-    w_clearance = 0.8 # bypassing obstacles
-    w_velocity  = 0.6 # speed value
+    w_heading   = 1.5 # (Zwiększone z 1.0) Mocniej nagradzaj patrzenie w stronę celu
+    w_clearance = 0.5 # (Zmniejszone z 0.8) Mniej agresywnie reaguj na bycie blisko obiektów
+    w_velocity  = 1.0 # (Zwiększone z 0.6) Znacznie bardziej nagradzaj jazdę do przodu
 
     # radius of wheel platform
     robo_radius = 0.17
     # lower -> less computations
     lidar_max_range = 3.0
     # keep robot from hitting obstacle
-    inflation_radius = 0.20
+    inflation_radius = 0.12
