@@ -4,7 +4,7 @@
 Zanim rozpoczniesz, upewnij się, że Twój komputer spełnia następujące wymagania:
 * **System operacyjny:** Linux (zalecany Ubuntu 22.04 LTS).
 * **Narzędzia:** Zainstalowany system kontroli wersji `git`.
-* **Połączenie sieciowe:** Komputer PC musi połączyć się z robotem poprzez wygenerowany hotspot drona 'hotspot_jetson'.
+* **Połączenie sieciowe:** Komputer PC musi połączyć się z robotem poprzez wygenerowany hotspot drona 'jetson_hotspot' (hasło: `jetson_hotspot`).
 
 ---
 
