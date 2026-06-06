@@ -69,7 +69,7 @@ class RobotNavigation(Node):
         self.debug_log_file = None
         run_dir = os.environ.get("ROBOT_RUN_DIR")
         if run_dir:
-            log_path = os.path.join(run_dir, "nav_debug.txt")
+            log_path = os.path.join(run_dir, "nav_log.txt")
             self.debug_log_file = open(log_path, "w")
             self.write_log("=== START SYSTEMU NAWIGACJI ===")
 

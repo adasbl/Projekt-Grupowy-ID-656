@@ -24,6 +24,7 @@ class ControlPanel(Node):
         self.slam_process = None
         self.nav2_process = None
         self.explore_process = None
+        self.custom_nav_process = None # <-- Dodane dla Twojego skryptu
 
         # Zmienna przechowująca referencję do aktualnego pliku logów
         self.common_log_file = None
@@ -113,6 +114,8 @@ class ControlPanel(Node):
 
     def stop_nav_systems(self):
         print(">>> Zatrzymuję systemy Nawigacji i Eksploracji...")
+        
+        # Zatrzymywanie Nav2
         if self.nav2_process:
             try:
                 os.killpg(os.getpgid(self.nav2_process.pid), signal.SIGINT)
@@ -121,6 +124,7 @@ class ControlPanel(Node):
                 pass
             self.nav2_process = None
                 
+        # Zatrzymywanie Explore Lite
         if self.explore_process:
             try:
                 os.killpg(os.getpgid(self.explore_process.pid), signal.SIGINT)
@@ -129,8 +133,18 @@ class ControlPanel(Node):
                 pass
             self.explore_process = None
 
+        # Zatrzymywanie własnego skryptu nawigacji
+        if self.custom_nav_process:
+            try:
+                os.killpg(os.getpgid(self.custom_nav_process.pid), signal.SIGINT)
+                self.custom_nav_process.wait(timeout=5.0)
+            except Exception:
+                pass
+            self.custom_nav_process = None
+
         subprocess.run(["pkill", "-9", "-f", "component_container"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-9", "-f", "explore"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-9", "-f", "robot_navigation.py"], stderr=subprocess.DEVNULL)
         
     def stop_robot(self):
         msg = Twist()
@@ -166,19 +180,20 @@ def main(args=None):
         print("[INICJALIZACJA] Panel PC gotowy do pracy.\n")
 
         while rclpy.ok():
-            print("="*45)
-            print("          PANEL STEROWANIA (PC) - NAV2")
-            print("="*45)
+            print("="*55)
+            print("          PANEL STEROWANIA (PC) - NAV2 & CUSTOM")
+            print("="*55)
             print("1 - Włącz silnik lidaru (na Jetsonie)")
             print("2 - Wyłącz silnik lidaru (na Jetsonie)")
             print("3 - Włącz budowanie mapy (SLAM + RViz)")
             print("4 - Zatrzymanie mapowania i nawigacji")
             print("5 - Sterowanie ręczne (Teleop)")
             print("6 - Autonomiczna eksploracja (Nav2 + M-Explore)")
+            print("7 - Autonomiczna eksploracja (Własny algorytm DWA/A*)")
             print("0 - Wyjście")
-            print("="*45)
+            print("="*55)
             
-            c = input("Wybierz akcję (0-6): ")
+            c = input("Wybierz akcję (0-7): ")
             
             if c == '1': 
                 panel.call_motor(panel.start_motor_client, "Włączono silnik lidaru")
@@ -192,8 +207,10 @@ def main(args=None):
             elif c == '5':
                 print("\n>>> Uruchamiam klawiaturę... (Wciśnij Ctrl+C, aby wrócić do menu) <<<")
                 subprocess.run(["ros2", "run", "teleop_twist_keyboard", "teleop_twist_keyboard"])
-            elif c == '6':
-                print("\n>>> Uruchamiam sekwencję autonomicznej nawigacji...")
+            
+            elif c == '6' or c == '7':
+                nazwa_trybu = "Nav2" if c == '6' else "Własny Algorytm"
+                print(f"\n>>> Uruchamiam sekwencję autonomicznej nawigacji ({nazwa_trybu})...")
                 
                 # --- 1. TWORZENIE FOLDERU NA MAPY I LOGI PRZED STARTEM ---
                 current_dir = os.path.realpath(os.path.dirname(__file__))
@@ -202,28 +219,43 @@ def main(args=None):
                 run_folder = os.path.join(logs_dir, f"run_{timestamp}")
                 os.makedirs(run_folder, exist_ok=True)
                 
-                # Przekazanie ścieżki (jeśli nadal używasz zmiennej środowiskowej gdzie indziej)
-                os.environ["ROBOT_RUN_DIR"] = run_folder
+                # Przekazanie ścieżki (dla nav_debug.txt w trybie 7)
+                env_vars = os.environ.copy()
+                env_vars["ROBOT_RUN_DIR"] = run_folder
 
                 # Otwarcie pliku na logi systemowe W TYM FOLDERZE
                 log_file_path = os.path.join(run_folder, 'system_log.txt')
                 panel.common_log_file = open(log_file_path, 'w')
-                panel.write_to_log(f"=== START SESJI AUTO-EKSPLORACJI ({timestamp}) ===")
+                panel.write_to_log(f"=== START SESJI AUTO-EKSPLORACJI: {nazwa_trybu} ({timestamp}) ===")
 
                 # --- 2. URUCHAMIANIE SYSTEMÓW ---
                 panel.start_slam()
                 print("Czekam 3 sekundy na zainicjalizowanie SLAM...")
                 time.sleep(3.0)
                 
-                panel.start_nav2()
-                print("Czekam 6 sekund na aktywację serwerów i map kosztów Nav2...")
-                time.sleep(6.0)
-
-                panel.start_exploration()
+                if c == '6':
+                    # Tryb 6: Oficjalne Nav2 + Explore Lite
+                    panel.start_nav2()
+                    print("Czekam 6 sekund na aktywację serwerów i map kosztów Nav2...")
+                    time.sleep(6.0)
+                    panel.start_exploration()
+                else:
+                    # Tryb 7: Twój skrypt robot_navigation.py
+                    print(">>> Uruchamiam Twój skrypt nawigacji (robot_navigation.py)...")
+                    panel.write_to_log("--- URUCHAMIANIE WŁASNEGO ALGORYTMU DWA/A* ---")
+                    nav_script = os.path.join(current_dir, 'robot_navigation.py')
+                    panel.custom_nav_process = subprocess.Popen(
+                        ["python3", nav_script], 
+                        env=env_vars,
+                        preexec_fn=os.setsid,
+                        stdout=panel.get_output_target(),
+                        stderr=subprocess.STDOUT
+                    )
                 
                 print(f"\n>>> Robot rozpoczął eksplorację! <<<")
                 print(f"Podgląd logów głównych: {log_file_path}")
-                print(f"Logi debuggowania (jeśli aktywne): {os.path.join(run_folder, 'nav_debug.txt')}")
+                if c == '7':
+                    print(f"Logi debuggowania (DWA): {os.path.join(run_folder, 'nav_log.txt')}")
                 print("Wciśnij Ctrl+C, aby zatrzymać robota i zapisać mapę.")
                 
                 try:
