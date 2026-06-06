@@ -45,7 +45,7 @@ git clone https://github.com/matrix1798/robot_sofware.git
 Aby Twój PC (Panel Sterowania) mógł bezkolizyjnie komunikować się z robotem (Jetsonem), oba urządzenia muszą pracować w tej samej domenie ROS. W tym projekcie używamy ID równego 30.
 
 ```bash
-source ~/ros2_ws/install/setup.bash
+source /opt/ros/humble/setup.bash
 export ROS_DOMAIN_ID=30
 ```
 
