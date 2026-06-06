@@ -25,16 +25,8 @@ class ControlPanel(Node):
         self.nav2_process = None
         self.explore_process = None
 
-        # --- WSPÓLNY SYSTEM LOGÓW ---
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        self.log_file_path = os.path.join(current_dir, 'system_log.txt')
-        
-        # Tryb 'w' (write) czyści stary plik przy każdym nowym uruchomieniu panelu.
-        self.common_log_file = open(self.log_file_path, 'w')
-        
-        start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.common_log_file.write(f"=== START SESJI PANELU STEROWANIA ({start_time}) ===\n")
-        self.common_log_file.flush()
+        # Zmienna przechowująca referencję do aktualnego pliku logów
+        self.common_log_file = None
 
     def call_motor(self, client, nazwa_akcji):
         print("Łączenie z Jetsonem...")
@@ -45,14 +37,24 @@ class ControlPanel(Node):
         rclpy.spin_until_future_complete(self, future)
         print(f"Polecenie wysłane na Jetsona: {nazwa_akcji}")
 
+    def get_output_target(self):
+        """Zwraca plik logów, jeśli istnieje, lub odrzuca logi, jeśli go nie ma."""
+        return self.common_log_file if self.common_log_file else subprocess.DEVNULL
+
+    def write_to_log(self, message):
+        """Pomocnicza funkcja do zapisywania z datą, jeśli plik logów jest otwarty."""
+        if self.common_log_file and not self.common_log_file.closed:
+            timestamp = datetime.now().strftime('%H:%M:%S')
+            self.common_log_file.write(f"\n[{timestamp}] {message}\n")
+            self.common_log_file.flush()
+
     def start_slam(self):
         if self.slam_process is not None and self.slam_process.poll() is None:
             print("System SLAM już działa!")
             return
             
         print(">>> Uruchamiam system SLAM i RViz w tle...")
-        self.common_log_file.write(f"\n[{datetime.now().strftime('%H:%M:%S')}] --- URUCHAMIANIE SLAM ---\n")
-        self.common_log_file.flush()
+        self.write_to_log("--- URUCHAMIANIE SLAM ---")
         
         current_dir = os.path.dirname(os.path.realpath(__file__))
         slam_launch_file = os.path.join(current_dir, 'pc_slam.launch.py')
@@ -60,7 +62,7 @@ class ControlPanel(Node):
         self.slam_process = subprocess.Popen(
             ["ros2", "launch", slam_launch_file], 
             preexec_fn=os.setsid,
-            stdout=self.common_log_file,      # <--- Wskazanie na wspólny plik
+            stdout=self.get_output_target(),
             stderr=subprocess.STDOUT
         )
 
@@ -69,8 +71,7 @@ class ControlPanel(Node):
             return
             
         print(">>> Uruchamiam system Nav2 w tle...")
-        self.common_log_file.write(f"\n[{datetime.now().strftime('%H:%M:%S')}] --- URUCHAMIANIE NAV2 ---\n")
-        self.common_log_file.flush()
+        self.write_to_log("--- URUCHAMIANIE NAV2 ---")
         
         current_dir = os.path.dirname(os.path.realpath(__file__))
         nav2_launch_file = os.path.join(current_dir, 'pc_nav2.launch.py')
@@ -78,7 +79,7 @@ class ControlPanel(Node):
         self.nav2_process = subprocess.Popen(
             ["ros2", "launch", nav2_launch_file], 
             preexec_fn=os.setsid,
-            stdout=self.common_log_file,      # <--- Wskazanie na wspólny plik
+            stdout=self.get_output_target(),
             stderr=subprocess.STDOUT
         )
 
@@ -87,13 +88,12 @@ class ControlPanel(Node):
             return
             
         print(">>> Uruchamiam system Explore Lite (Autonomiczna Eksploracja)...")
-        self.common_log_file.write(f"\n[{datetime.now().strftime('%H:%M:%S')}] --- URUCHAMIANIE M-EXPLORE ---\n")
-        self.common_log_file.flush()
+        self.write_to_log("--- URUCHAMIANIE M-EXPLORE ---")
         
         self.explore_process = subprocess.Popen(
             ["ros2", "launch", "explore_lite", "explore.launch.py"], 
             preexec_fn=os.setsid,
-            stdout=self.common_log_file,      # <--- Wskazanie na wspólny plik
+            stdout=self.get_output_target(),
             stderr=subprocess.STDOUT
         )
 
@@ -146,10 +146,9 @@ class ControlPanel(Node):
         self.stop_robot()
         subprocess.run(["pkill", "-9", "-f", "teleop_twist_keyboard"], stderr=subprocess.DEVNULL)
         
-        # Zamykamy wspólny plik logów dopiero na samym końcu
-        if hasattr(self, 'common_log_file') and not self.common_log_file.closed:
-            end_time = datetime.now().strftime("%H:%M:%S")
-            self.common_log_file.write(f"\n=== KONIEC SESJI PANELU ({end_time}) ===\n")
+        # Bezpieczne zamknięcie pliku, jeśli był otwarty
+        if self.common_log_file and not self.common_log_file.closed:
+            self.write_to_log("=== KONIEC SESJI PANELU ===")
             self.common_log_file.close()
             
         print("Gotowe. Do widzenia!")
@@ -160,7 +159,7 @@ def main(args=None):
     panel = ControlPanel()
 
     try:
-        print(f"\n[INICJALIZACJA] Logi zapisywane do: {panel.log_file_path}")
+        print("\n[INICJALIZACJA] Czyszczenie środowiska...")
         panel.stop_nav_systems()
         panel.stop_slam() 
         subprocess.run(["pkill", "-9", "-f", "teleop_twist_keyboard"], stderr=subprocess.DEVNULL)
@@ -196,12 +195,22 @@ def main(args=None):
             elif c == '6':
                 print("\n>>> Uruchamiam sekwencję autonomicznej nawigacji...")
                 
+                # --- 1. TWORZENIE FOLDERU NA MAPY I LOGI PRZED STARTEM ---
                 current_dir = os.path.realpath(os.path.dirname(__file__))
                 timestamp = time.strftime("%Y%m%d_%H%M%S")
-                images_dir = os.path.join(current_dir, 'logs')
-                run_folder = os.path.join(images_dir, f"run_{timestamp}")
+                logs_dir = os.path.join(current_dir, 'logs')
+                run_folder = os.path.join(logs_dir, f"run_{timestamp}")
                 os.makedirs(run_folder, exist_ok=True)
+                
+                # Przekazanie ścieżki (jeśli nadal używasz zmiennej środowiskowej gdzie indziej)
+                os.environ["ROBOT_RUN_DIR"] = run_folder
 
+                # Otwarcie pliku na logi systemowe W TYM FOLDERZE
+                log_file_path = os.path.join(run_folder, 'system_log.txt')
+                panel.common_log_file = open(log_file_path, 'w')
+                panel.write_to_log(f"=== START SESJI AUTO-EKSPLORACJI ({timestamp}) ===")
+
+                # --- 2. URUCHAMIANIE SYSTEMÓW ---
                 panel.start_slam()
                 print("Czekam 3 sekundy na zainicjalizowanie SLAM...")
                 time.sleep(3.0)
@@ -212,14 +221,23 @@ def main(args=None):
 
                 panel.start_exploration()
                 
-                print(f"\n>>> Robot rozpoczął eksplorację! (Podgląd logów: {panel.log_file_path}) <<<")
+                print(f"\n>>> Robot rozpoczął eksplorację! <<<")
+                print(f"Podgląd logów głównych: {log_file_path}")
+                print(f"Logi debuggowania (jeśli aktywne): {os.path.join(run_folder, 'nav_debug.txt')}")
                 print("Wciśnij Ctrl+C, aby zatrzymać robota i zapisać mapę.")
+                
                 try:
                     while True:
                         time.sleep(1)
                 except KeyboardInterrupt:
                     print("\nZatrzymano proces nawigacji.")
                 finally:
+                    # Zamknięcie pliku system_log.txt
+                    if panel.common_log_file and not panel.common_log_file.closed:
+                        panel.write_to_log("=== ZATRZYMANO AUTO-EKSPLORACJĘ ===")
+                        panel.common_log_file.close()
+                        panel.common_log_file = None
+                    
                     panel.stop_nav_systems()
                     panel.stop_robot()
                     
