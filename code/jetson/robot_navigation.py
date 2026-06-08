@@ -29,7 +29,7 @@ class RobotNavigation(Node):
         # stuck detection
         self.last_position = None
         self.last_position_time = self.get_clock().now()
-        self.stuck_timeout = 3.0 
+        self.stuck_timeout = 2.0 
         self.stuck_distance = 0.05 # maximum distance 
         self.replan_cooldown = 5.0 # replan after this time
         self.last_replan_time = None
@@ -296,6 +296,7 @@ class RobotNavigation(Node):
     def dwa_control(self, x, y, theta, v, w, goal_x, goal_y, obstacles):
         '''Realization DWA algorithm (local navi)'''
         cfg = self.dwa_cfg
+        
         # velocity limits (rapid velocity changes are impossible)
         v_min = max(cfg.min_linear_vel,  v - cfg.max_linear_acc  * cfg.dt)
         v_max = min(cfg.max_linear_vel,  v + cfg.max_linear_acc  * cfg.dt)
@@ -310,13 +311,20 @@ class RobotNavigation(Node):
         w_samples = np.arange(w_min, w_max + cfg.angular_resolution, cfg.angular_resolution)
         obs_arr = np.array(obstacles) if obstacles else None
 
+        # Zmierz jak blisko przeszkody jesteśmy W TEJ CHWILI (przed jakimkolwiek ruchem)
+        current_dist = self.min_obstacle_dist([(x, y, theta)], obs_arr)
+
         # simulate trajectory for each velocities' sample
         for sv in v_samples:
             for sw in w_samples:
                 traj = self.simulate_trajectory(x, y, theta, sv, sw)
                 min_dist = self.min_obstacle_dist(traj, obs_arr)
 
-                if min_dist < cfg.robo_radius: continue
+                if min_dist < cfg.robo_radius:
+                    # Odrzuć trajektorię TYLKO jeśli zbliża nas do ściany.
+                    # Brak znaku równe pozwala na bezpieczny obrót w miejscu (min_dist == current_dist)
+                    if min_dist < current_dist and current_dist != 0:
+                        continue
 
                 # scores base on weights 
                 heading_score = self.score_heading(traj, goal_x, goal_y)
@@ -327,33 +335,42 @@ class RobotNavigation(Node):
                     best_score = score
                     best_v, best_w = sv, sw
 
-        # TODO: CHANGE THIS CONDITION (have no idea how)
-        # no best scores-> spin around and look for best score
+        # Zachowanie awaryjne, gdy DWA uzna, że jest uwięzione
         if best_score == -math.inf:
-            best_v = 0.0
-            best_w = cfg.max_angular_vel * 0.5 * self._recovery_dir
-            self._recovery_dir *= -1.0
-            self.write_log("[DWA WARN] Brak bezpiecznej trasy (best_score=-inf)! Wymuszam awaryjny obrot.")
+            best_v = 0.0  # ZERO jazdy w przód/tył na ślepo
+            best_w = 0.3  # Łagodny, stały obrót w miejscu, by Lidar zeskanował nową przestrzeń
+            
+            self.write_log("[DWA WARN] Brak bezpiecznej trasy! Szukam drogi ucieczki...")
             
         return best_v, best_w
 
 
     def simulate_trajectory(self, x, y, theta, v, w):
-        '''Simulate trajectory for DWA in given range time'''
+        '''Simulate trajectory for DWA (Corrected Kinematics)'''
+        traj = []
         cfg = self.dwa_cfg
-        return [(x + v*math.cos(theta + w*cfg.dt*i)*cfg.dt*i, y + v*math.sin(theta + w*cfg.dt*i)*cfg.dt*i) for i in range(1, int(cfg.predict_time / cfg.dt) + 1)]
+        time = 0.0
+        while time <= cfg.predict_time:
+            x += v * math.cos(theta) * cfg.dt
+            y += v * math.sin(theta) * cfg.dt
+            theta += w * cfg.dt
+            time += cfg.dt
+            traj.append((x, y, theta)) # <--- ZAPISUJEMY TEŻ KĄT ROBOTA
+        return traj
 
     def min_obstacle_dist(self, traj, obs_arr):
         '''Check how close to obstacle durign simulation'''
         if obs_arr is None or len(obs_arr) == 0: return self.dwa_cfg.lidar_max_range
-        return float(np.linalg.norm(np.array(traj)[:, np.newaxis, :] - obs_arr[np.newaxis, :, :], axis=2).min())
+        
+        # Wyciągamy tylko kolumny (x, y) z naszej nowej trajektorii (x, y, theta)
+        traj_xy = np.array(traj)[:, :2]
+        return float(np.linalg.norm(traj_xy[:, np.newaxis, :] - obs_arr[np.newaxis, :, :], axis=2).min())
 
     def score_heading(self, traj, goal_x, goal_y):
         '''Check how adequate is the given trajectory'''
-        end_x, end_y = traj[-1]
+        end_x, end_y, end_theta = traj[-1] # <--- TERAZ POBIERAMY PRAWDZIWY KĄT Z SYMULACJI
+        
         goal_angle   = math.atan2(goal_y - end_y, goal_x - end_x)
-        # robot orientation
-        end_theta = math.atan2(traj[-1][1] - traj[-2][1], traj[-1][0] - traj[-2][0]) if len(traj) >= 2 else 0.0
 
         # atan2(sin/cos) - angle normalization
         angle_diff = abs(math.atan2(math.sin(goal_angle - end_theta), math.cos(goal_angle - end_theta)))
