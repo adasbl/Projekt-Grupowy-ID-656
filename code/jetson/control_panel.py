@@ -179,11 +179,12 @@ def main(args=None):
             print("4 - Zatrzymanie mapowania i nawigacji")
             print("5 - Sterowanie ręczne (Teleop)")
             print("6 - Autonomiczna eksploracja (Nav2 + M-Explore)")
-            print("7 - Zdalne wyłączenie Jetsona (Shutdown przez ROS2)")
+            print("7 - Ręczne mapowanie (SLAM + Teleop + Zapis mapy)")
+            print("8 - Zdalne wyłączenie Jetsona (Shutdown przez ROS2)")
             print("0 - Wyjście")
             print("="*55)
             
-            c = input("Wybierz akcję (0-7): ")
+            c = input("Wybierz akcję (0-8): ")
             
             if c == '1': 
                 panel.call_motor(panel.start_motor_client, "Włączono silnik lidaru")
@@ -206,7 +207,7 @@ def main(args=None):
                 current_dir = os.path.realpath(os.path.dirname(__file__))
                 timestamp = time.strftime("%Y%m%d_%H%M%S")
                 logs_dir = os.path.join(current_dir, 'logs')
-                run_folder = os.path.join(logs_dir, f"run_{timestamp}")
+                run_folder = os.path.join(logs_dir, f"run_auto_{timestamp}")
                 os.makedirs(run_folder, exist_ok=True)
                 
                 log_file_path = os.path.join(run_folder, 'system_log.txt')
@@ -263,9 +264,76 @@ def main(args=None):
                             pass
                     except Exception as e:
                         print(f"[PANEL] Błąd podczas zapisu mapy: {e}")
+                    
+                    # Pytanie o wyłączenie SLAM po zapisie mapy
+                    decyzja = input("\nCzy zamknąć również RViz i procesy mapowania? (t/n): ")
+                    if decyzja.lower() == 't':
+                        panel.stop_slam()
+                    else:
+                        print("SLAM działa dalej w tle.")
+
+            # ===== RĘCZNE MAPOWANIE Z ZAPISEM =====
+            elif c == '7':
+                print("\n>>> Uruchamiam ręczne mapowanie (SLAM + Teleop)...")
+                
+                # Tworzenie folderu na mapę podobnie jak w nawigacji autonomicznej
+                current_dir = os.path.realpath(os.path.dirname(__file__))
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                logs_dir = os.path.join(current_dir, 'logs')
+                run_folder = os.path.join(logs_dir, f"run_manual_{timestamp}")
+                os.makedirs(run_folder, exist_ok=True)
+                
+                # Uruchomienie SLAM i RViz
+                panel.start_slam()
+                print("Czekam 3 sekundy na zainicjalizowanie SLAM...")
+                time.sleep(3.0)
+                
+                print("\n>>> Uruchamiam sterowanie ręczne. <<<")
+                print("=========================================================")
+                print("Steruj robotem. Kiedy skończysz, wciśnij ** Ctrl+C **,")
+                print("aby zatrzymać robota, zapisać mapę i wrócić do menu.")
+                print("=========================================================\n")
+                
+                # Uruchomienie klawiatury w bloku try-except aby przechwycić Ctrl+C
+                try:
+                    subprocess.run(["ros2", "run", "teleop_twist_keyboard", "teleop_twist_keyboard"])
+                except KeyboardInterrupt:
+                    pass  # Użytkownik zakończył sterowanie
+                
+                print("\n[Zakończono jazdę ręczną]")
+                panel.stop_robot()
+                
+                print("\n>>> Trwa zapisywanie zbudowanej mapy...")
+                try:
+                    map_file_path = os.path.join(run_folder, "mapa")
+                    subprocess.run([
+                        "ros2", "run", "nav2_map_server", "map_saver_cli", 
+                        "-f", map_file_path
+                    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    
+                    print(f"[PANEL] Sukces! Mapa została zapisana w: {run_folder}")
+                    
+                    try:
+                        from PIL import Image
+                        pgm_file = map_file_path + ".pgm"
+                        png_file = map_file_path + ".png"
+                        if os.path.exists(pgm_file):
+                            with Image.open(pgm_file) as img:
+                                img.save(png_file)
+                    except ImportError:
+                        pass
+                except Exception as e:
+                    print(f"[PANEL] Błąd podczas zapisu mapy: {e}")
+                
+                # Pytanie o wyłączenie SLAM po zapisie mapy
+                decyzja = input("\nCzy zamknąć również RViz i procesy mapowania? (t/n): ")
+                if decyzja.lower() == 't':
+                    panel.stop_slam()
+                else:
+                    print("SLAM działa dalej w tle.")
             
             # ===== WYŁĄCZANIE JETSONA PRZEZ ROS 2 =====
-            elif c == '7':
+            elif c == '8':
                 potwierdzenie = input("Czy na pewno chcesz całkowicie wyłączyć Jetsona? (t/n): ")
                 if potwierdzenie.lower() == 't':
                     print("\n>>> Wysyłam sygnał Shutdown do Jetsona przez sieć ROS 2...")
