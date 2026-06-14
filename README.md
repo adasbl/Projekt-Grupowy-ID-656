@@ -2,6 +2,10 @@
 
 Projekt autonomicznego robota mobilnego opartego na układzie różnicowym (differential drive). Projekt został zrealizowany we współpracy z [Zakładem Automatyki i Urządzeń Pomiarowych AREX Sp. z o.o](https://www.wbgroup.pl/arex/).
 
+<div align="center">
+    <img src="img/photo1.jpeg" width="60%">
+</div>
+
 ## Struktura Repozytorium
 
 * `3Dmodels/` - Modele 3D:
