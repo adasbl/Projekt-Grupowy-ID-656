@@ -11,7 +11,7 @@ Projekt autonomicznego robota mobilnego opartego na układzie różnicowym (diff
 Głównym zadaniem robota jest autonomiczna eksploracja nieznanych przestrzeni, budowanie map (SLAM) w czasie rzeczywistym oraz omijanie przeszkód, a także możliwość zdalnego sterowania i monitorowania parametrów telemetrycznych.
 
 <div align="center">
-    <img src="img/mapping-animation.gif" width="60%">
+    <img src="img/mapping-animation.gif" width="100%">
 </div>
 
 ## 🛠️ Architektura Sprzętowa (Hardware)
