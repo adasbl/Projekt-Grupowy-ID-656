@@ -29,7 +29,7 @@ System został podzielony na warstwę decyzyjną (High-Level) oraz wykonawczą (
 * **Napęd:** Silniki DC 6V Pololu z przekładnią 298:1, sterownik silników DRV8833.
 * **Sensoryka:** * Enkodery magnetyczne Pololu 3081 (12 impulsów na obrót).
   * IMU LSM6DSV16X (akcelerometr + żyroskop po I2C do korekcji orientacji).
-* **Zasilanie:** Pakiet ogniw 18650 Li-Ion (3.6V) podłączony do modułu UPS Waveshare 18307, który stabilizuje napięcie do 5V (dla Jetsona) i 3.3V (dla logiki STM32).
+* **Zasilanie:** Pakiet ogniw 18650 Li-Ion (3.6V) podłączony do modułu UPS Waveshare 18307, który stabilizuje napięcie do 5V (dla Jetsona) i 3.3V (dla logiki STM32 i enkoderów).
 
 <div align="center">
     <img src="img/photo2.jpg" width="30%">
@@ -49,7 +49,8 @@ Oprogramowanie wykorzystuje narzędzia systemu ROS2 do zarządzania węzłami.
 * **Eksploracja:** System potrafi autonomicznie wyszukiwać najdalsze nieodkryte granice mapy (tzw. frontiers) i kierować tam robota (m.in. przy użyciu pakietu `explore_lite`).
 
 ### Low-Level Control (STM32)
-* Napisany w języku C przy użyciu STM32CubeIDE.
+* Napisany w języku C program z **regulatorem PI**
+* Obsługa enkoderów, silników (sterownik `DRV8833`), czujników IMU `LSM6DSV16X` (I2C), przycisków i diód, komunikacji UART
 * Komunikacja z Jetsonem odbywa się za pomocą asynchronicznych ramek UART o stałej długości 10 bajtów: `[0xAA, v_lin(float), v_ang(float), 0x55]`.
 * Przelicza zadane prędkości na m/s na ticki enkoderów w cyklu 25 ms.
 
@@ -57,19 +58,22 @@ Oprogramowanie wykorzystuje narzędzia systemu ROS2 do zarządzania węzłami.
 
 ## 💻 Panel Sterowania PC
 
-Do obsługi robota przygotowano dedykowany skrypt uruchamiany na stacji bazowej (`control_panel.py`), który pozwala zarządzać procesami robota przez sieć.
+Do obsługi robota przygotowano dedykowany skrypt uruchamiany na stacji bazowej (`control_panel.py`), który pozwala zarządzać procesami robota przez sieć hotspot robota.
 
 <div align="center">
     <img src="img/control-panel.png" width="60%">
 </div>
 
 **Dostępne akcje:**
-1. Włącz / Wyłącz silnik lidaru (na Jetsonie).
-2. Budowanie mapy (SLAM + podgląd w RViz).
-3. Sterowanie ręczne (Teleop z klawiatury).
-4. **Autonomiczna eksploracja:** Uruchamia węzły Nav2 oraz M-Explore; robot samodzielnie jeździ po pomieszczeniu do momentu zmapowania całości. Zapisuje logi do folderu `logs/`.
-5. Ręczne mapowanie z automatycznym zapisem mapy po zakończeniu jazd.
-6. Zdalne wyłączenie (Shutdown) komputera Jetson.
+1. Włącz silnik lidaru
+2. Wyłącz silnik lidaru 
+3. Budowanie mapy (SLAM + podgląd w RViz). 
+4. Zatrzymanie mapowania
+5. Sterowanie ręczne (Teleop z klawiatury).
+6. **Autonomiczna eksploracja (Nav2 + M-Explore)** <br>
+    (SLAM + podgląd w RViz), Robot autonomicznie jeździ po pomieszczeniu do momentu zmapowania całości. Zapisuje mapę i logi do folderu `logs/`.
+7. **Ręczne mapowanie** <br>
+    (SLAM + podgląd w RViz + Teleop). Ręczna jazda z mapowaniem. Zapisuje mapę i logi do folderu `logs/`.
 
 ---
 
@@ -78,17 +82,18 @@ Do obsługi robota przygotowano dedykowany skrypt uruchamiany na stacji bazowej 
 Struktura plików opiera się na wydzieleniu logiki na poszczególne środowiska wykonawcze:
 
 * `3Dmodels/` - Modele 3D:
-  * `platform/` - Modele 3D ramy platformy robota.
-  * `other/` - Pozostałe elementy drukowane.
+  * `platform/` - modele elementów platformy robota.
+  * `components/` - modele poszczególnych komponentów.
+  * `assembly/` - modele całego robota.
 * `code/` - Kod źródłowy i skrypty:
-  * `ESP32/` - Oprogramowanie eksperymentalne dla układów ESP32.
-  * `jetson/` - Węzły ROS2 i algorytmy dla Nvidia Jetson (m.in. `robot_navigation.py`, `a_star.py`, `dwa.py`, `nav2_params.yaml`, `control_panel.py`).
-  * `STM32/` - Kod C dla mikrokontrolera (obsługa mostka H, enkodery, regulator PI).
-  * `ros_simulation/` & `simulation/` - Środowiska do testów algorytmów (np. Gazebo).
+  * `ESP32/` - oprogramowanie eksperymentalne dla ESP32.
+  * `jetson/` - węzły ROS2 i algorytmy dla Nvidia Jetson (m.in. `robot_navigation.py`, `a_star.py`, `dwa.py`, `nav2_params.yaml`, `control_panel.py`).
+  * `STM32/` - kod C dla mikrokontrolera STM32.
+  * `ros_simulation/` & `simulation/` - środowiska do testów algorytmów (np. Gazebo).
 * `datasheets/` - Noty katalogowe wykorzystanych podzespołów (np. DRV8833, LSM6DSV16X).
 * `docs/` & `docsPG/` - Dokumentacja techniczna (DTP), listy komponentów, bilans mocy.
 * `img/` - Zdjęcia projektu, renderów 3D oraz map.
-* `pcb/` *(Submoduł)* - Pliki projektu KiCad (schematy i obwody drukowane) płyty głównej sterownika.
+* `pcb/` *(Submoduł)* - Pliki projektu KiCad płyty głównej sterownika.
 * `robot-setup/` *(Submoduł)* - Skrypty i konfiguracja początkowa środowiska Docker / Jetson.
 
 ---
