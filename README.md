@@ -105,7 +105,7 @@ Struktura plików opiera się na wydzieleniu logiki na poszczególne środowiska
 
 ## 👥 Zespół Projektowy
 
-* [Adam Błażejewski](https://github.com/adasbl) - Kierownik projektu / Elektronika / Kod STM32
-* [Mateusz Kuczerowski](https://github.com/matrix1798) - Architektura ROS2 / Implementacja algorytmów na Jetsonie
-* [Maciej Domeradzki](https://github.com/TofTo23) - Dokumentacja techniczna / Modele 3D
-* [Krzysztof Toczyński](https://github.com/rolomixedmixed) - Architektura mechaniczna / Pomiary i testy
+* [Adam Błażejewski](https://github.com/adasbl)
+* [Mateusz Kuczerowski](https://github.com/matrix1798)
+* [Maciej Domeradzki](https://github.com/TofTo23)
+* [Krzysztof Toczyński](https://github.com/rolomixedmixed)
