@@ -54,6 +54,10 @@ Oprogramowanie wykorzystuje narzędzia systemu ROS2 do zarządzania węzłami.
 * Komunikacja z Jetsonem odbywa się za pomocą asynchronicznych ramek UART o stałej długości 10 bajtów: `[0xAA, v_lin(float), v_ang(float), 0x55]`.
 * Przelicza zadane prędkości na m/s na ticki enkoderów w cyklu 25 ms.
 
+<div align="center">
+    <img src="img/robot-render.png" width="45%">
+</div>
+
 ---
 
 ## 💻 Panel Sterowania PC
