@@ -2,5 +2,5 @@
 	path = pcb
 	url = https://github.com/urmumfat/main-controller-pcb
 [submodule "robot-setup"]
-	path = robot-setup
-	url = https://github.com/matrix1798/robot_sofware.git
+	path = robot-software-setup
+	url = https://github.com/matrix1798/robot_software.git
